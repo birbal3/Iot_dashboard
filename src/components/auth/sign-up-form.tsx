@@ -12,6 +12,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
+import { MenuItem } from '@mui/material';
+import {Select} from '@mui/material';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -25,14 +27,24 @@ import { useUser } from '@/hooks/use-user';
 const schema = zod.object({
   firstName: zod.string().min(1, { message: 'First name is required' }),
   lastName: zod.string().min(1, { message: 'Last name is required' }),
-  email: zod.string().min(1, { message: 'Email is required' }).email(),
+  email: zod.string().min(1, { message: 'Email is required' }).email().refine((email)=>email.endsWith('escortskubota.com'), {
+    message: `Email must belong to the escortskubota domain`,
+  }),
+  ein:zod.string().min(6, { message: "Must be exactly 6 characters long" }),
+  role:zod.string().min(1,{message:"Select role"}),
   password: zod.string().min(6, { message: 'Password should be at least 6 characters' }),
   terms: zod.boolean().refine((value) => value, 'You must accept the terms and conditions'),
 });
 
 type Values = zod.infer<typeof schema>;
 
-const defaultValues = { firstName: '', lastName: '', email: '', password: '', terms: false } satisfies Values;
+const defaultValues = { firstName: '', lastName: '', email: '', ein:'' ,role:'' , password: '', terms: false } satisfies Values;
+
+const roles = [
+  { value: 'Admin', label: 'Admin' },
+  { value: 'Field Inspector', label: 'Field Inspector' },
+  { value: 'Spectator', label: 'Spectator' },
+] as const;
 
 export function SignUpForm(): React.JSX.Element {
   const router = useRouter();
@@ -101,7 +113,35 @@ export function SignUpForm(): React.JSX.Element {
               <FormControl error={Boolean(errors.firstName)}>
                 <InputLabel>Last name</InputLabel>
                 <OutlinedInput {...field} label="Last name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
+                {errors.lastName ? <FormHelperText>{errors.lastName.message}</FormHelperText> : null}
+              </FormControl>
+            )}
+          />
+          <Controller
+            control={control}
+            name="ein"
+            render={({ field }) => (
+              <FormControl error={Boolean(errors.ein)}>
+                <InputLabel>EIN</InputLabel>
+                <OutlinedInput {...field} label="EIN" />
+                {errors.ein ? <FormHelperText>{errors.ein.message}</FormHelperText> : null}
+              </FormControl>
+            )}
+          />
+          <Controller
+            control={control}
+            name="role"
+            render={({ field }) => (
+              <FormControl error={Boolean(errors.ein)}>
+                <InputLabel>Role</InputLabel>
+                <Select {...field} defaultValue="Admin" label="Admin" name="role" variant="outlined">
+                {roles.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.role ? <FormHelperText>{errors.role.message}</FormHelperText> : null}
               </FormControl>
             )}
           />
@@ -150,7 +190,7 @@ export function SignUpForm(): React.JSX.Element {
           </Button>
         </Stack>
       </form>
-      <Alert color="warning">Created users are not persisted</Alert>
+      <Alert color="warning">Wait for admin approval once sign up is done</Alert>
     </Stack>
   );
 }

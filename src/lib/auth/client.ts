@@ -1,6 +1,7 @@
 'use client';
 
 import type { User } from '@/types/user';
+import axios from 'axios';
 
 function generateToken(): string {
   const arr = new Uint8Array(12);
@@ -21,6 +22,8 @@ export interface SignUpParams {
   lastName: string;
   email: string;
   password: string;
+  ein:string,
+  role:string
 }
 
 export interface SignInWithOAuthParams {
@@ -37,14 +40,30 @@ export interface ResetPasswordParams {
 }
 
 class AuthClient {
-  async signUp(_: SignUpParams): Promise<{ error?: string }> {
-    // Make API request
+  async signUp(params: SignUpParams): Promise<{ error?: string }> {
+    const { firstName, lastName, ein, role, password, email } = params;
+    console.log( firstName, lastName, ein, role, password, email )
 
-    // We do not handle the API, so we'll just generate a token and store it in localStorage.
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
+    try {
+      // Make API request
+      const res = await axios.post('http://localhost:3302/authenticate/register', {
+        email,
+        ein,
+        role,
+        firstName,
+        lastName, 
+        password,
+      });
 
-    return {};
+      if (res?.data?.success) {
+        return {};  // Successful sign up, no error
+      } else {
+        return { error: 'Sign up failed' };  // Handle sign-up failure
+      }
+    } catch (err) {
+      console.error('Error during sign-up:', err);  // Log the error for debugging
+      return { error: 'An error occurred during sign up. Please try again.' };  // Provide user-friendly error
+    }
   }
 
   async signInWithOAuth(_: SignInWithOAuthParams): Promise<{ error?: string }> {
@@ -53,18 +72,27 @@ class AuthClient {
 
   async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
     const { email, password } = params;
-
-    // Make API request
-
-    // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (email !== 'sofia@devias.io' || password !== 'Secret1') {
-      return { error: 'Invalid credentials' };
+    try{
+      const res  = await axios.post('http://localhost:3302/authenticate/login',{
+        email,password
+      })
+      if(res?.data?.success)
+      {
+        const {token,role} = res?.data;
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("role");
+        localStorage.setItem("authToken",token)
+        localStorage.setItem("role", role)
+        return {};
+      }
+      else
+      return {error:"Login failed, check credentials"}
     }
-
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
-
-    return {};
+    catch(err)
+    {
+      console.log(err);
+      return {error:"Login failed"}
+    }
   }
 
   async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
@@ -79,7 +107,7 @@ class AuthClient {
     // Make API request
 
     // We do not handle the API, so just check if we have a token in localStorage.
-    const token = localStorage.getItem('custom-auth-token');
+    const token = localStorage.getItem('authToken');
 
     if (!token) {
       return { data: null };
@@ -89,7 +117,7 @@ class AuthClient {
   }
 
   async signOut(): Promise<{ error?: string }> {
-    localStorage.removeItem('custom-auth-token');
+    localStorage.removeItem('authToken');
 
     return {};
   }
