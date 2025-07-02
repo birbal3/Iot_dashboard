@@ -8,14 +8,16 @@ import {
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z as zod } from 'zod';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import ApexCharts from 'apexcharts';
 import { Grid } from '@mui/system';
+import dynamic from 'next/dynamic';
+
+const ApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface SensorData {
   id: number;
@@ -49,11 +51,21 @@ type Values = {
 export default function Dashboard() {
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
   const [filterData, setFilterData] = useState<SensorData[]>([]);
+  const [chartData, setChartData] = useState<{
+    humidity: [number, number][];
+    moisture: [number, number][];
+    sunlight: [number, number][];
+    rain: [number, number][];
+  }>({
+    humidity: [],
+    moisture: [],
+    sunlight: [],
+    rain: [],
+  });
 
   const {
     control,
     watch,
-    formState: { errors },
   } = useForm<Values>({
     defaultValues: {
       id: 0,
@@ -67,7 +79,6 @@ export default function Dashboard() {
       const res = await axios.get(
         'https://g14527fbq1.execute-api.ap-southeast-2.amazonaws.com/data'
       );
-      console.log('Fetched data:', res.data);
       setSensorData(res.data);
     };
     fetchData();
@@ -81,110 +92,47 @@ export default function Dashboard() {
       return entry.id === id && entryDate === date;
     });
     setFilterData(filtered);
-    console.log('Filtered data:', filtered);
-  }, [watch('date'), watch('id')]);
-
-  const renderChart = (
-    elementId: string,
-    name: string,
-    color: string,
-    data: [number, number][]
-  ) => {
-    const options: ApexCharts.ApexOptions = {
-      series: [{ name, data }],
-      chart: {
-        id: elementId,
-        type: 'area',
-        height: 300,
-        zoom: { autoScaleYaxis: true },
-      },
-      dataLabels: { enabled: false },
-      // markers: { size: 4 },
-      xaxis: {
-        type: 'datetime',
-        title: { text: 'Timestamp' },
-      },
-      yaxis: {
-        title: { text: name },
-      },
-      tooltip: {
-        x: { format: 'dd MMM yyyy HH:mm:ss' },
-      },
-      fill: {
-        type: 'gradient',
-        gradient: {
-          shadeIntensity: 1,
-          opacityFrom: 0.7,
-          opacityTo: 0.9,
-          stops: [0, 100],
-        },
-      },
-      colors: [color],
-    };
-
-    const chart = new ApexCharts(document.querySelector(`#${elementId}`), options);
-    chart.render();
-    return chart;
-  };
+  }, [watch('date'), watch('id'), sensorData]);
 
   useEffect(() => {
     if (!filterData.length) return;
 
-    const convertToTimestamp = (ts: string) => new Date(ts.replace('/T', 'T')).getTime();
-    function convertToUnixTimestamp(dateString: string): number {
-      // Replace '/T' with 'T' to match ISO format
-      const isoFormatted = dateString.replace('/T', ';');
-
+    const convertToUnixTimestamp = (ts: string): number => {
+      const isoFormatted = ts.replace('/T', ';');
       const date = new Date(isoFormatted);
-
-      if (isNaN(date.getTime())) {
-        console.error('Invalid date format');
-        return 0; // Return 0 or handle the error as needed
-      }
-
-      // Return Unix timestamp in milliseconds
-      return date.getTime()+19800000;
-    }
-
-
-    const humidityData:[number,number][] = filterData.map((entry) => [
-      convertToUnixTimestamp(entry.TimeStamp),
-      entry.payload.humidity,
-    ]);
-
-    const soilMoistureData:[number,number][] = filterData.map((entry) => [
-      convertToUnixTimestamp(entry.TimeStamp),
-      entry.payload.soilMoister,
-    ]);
-
-    const sunlightData:[number,number][] = filterData.map((entry) => [
-      convertToUnixTimestamp(entry.TimeStamp),
-      entry.payload.sunlight,
-    ]);
-
-    const rainStatusData:[number,number][] = filterData.map((entry) => [
-      convertToUnixTimestamp(entry.TimeStamp),
-      entry.payload.rainStatus,
-    ]);
-    console.log('Humidity Data:', humidityData);
-
-    const humidityChart = renderChart('chart-humidity', 'Humidity', '#008FFB', humidityData);
-    const moistureChart = renderChart('chart-moisture', 'Soil Moisture', '#00E396', soilMoistureData);
-    const sunlightChart = renderChart('chart-sunlight', 'Sunlight', '#FEB019', sunlightData);
-    const rainChart = renderChart('chart-rain', 'Rain Status', '#FF4560', rainStatusData);
-
-    return () => {
-      humidityChart?.destroy();
-      moistureChart?.destroy();
-      sunlightChart?.destroy();
-      rainChart?.destroy();
+      return isNaN(date.getTime()) ? 0 : date.getTime() + 19800000;
     };
+
+    setChartData({
+      humidity: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.humidity]),
+      moisture: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.soilMoister]),
+      sunlight: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.sunlight]),
+      rain: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.rainStatus]),
+    });
   }, [filterData]);
+
+  const getChartOptions = (title: string, color: string): ApexCharts.ApexOptions => ({
+    chart: { type: 'area', height: 300, zoom: { autoScaleYaxis: true } },
+    xaxis: { type: 'datetime', title: { text: 'Timestamp' } },
+    yaxis: { title: { text: title } },
+    dataLabels: { enabled: false },
+    tooltip: { x: { format: 'dd MMM yyyy HH:mm:ss' } },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.9,
+        stops: [0, 100],
+      },
+    },
+    colors: [color],
+  });
 
   return (
     <div className="p-6">
       <Grid container spacing={2}>
-        <Grid size={1}>
+        <Grid >
           <Controller
             name="id"
             control={control}
@@ -208,7 +156,7 @@ export default function Dashboard() {
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   label="Date"
-                  format='DD/MM/YYYY'
+                  format="DD/MM/YYYY"
                   value={field.value}
                   onChange={(date) => field.onChange(date)}
                   slotProps={{ textField: { fullWidth: true } }}
@@ -220,22 +168,55 @@ export default function Dashboard() {
       </Grid>
 
       {filterData.length === 0 && (
-        <div style={{display:'flex', textAlign:
-'center', justifyContent:'center', marginTop:'20px', color:'black', fontSize:'18px', fontWeight:'bold'
-        }}>No data available for selected ID and Date.</div>
+        <div style={{
+          display: 'flex',
+          textAlign: 'center',
+          justifyContent: 'center',
+          marginTop: '20px',
+          color: 'black',
+          fontSize: '18px',
+          fontWeight: 'bold'
+        }}>
+          No data available for selected ID and Date.
+        </div>
       )}
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filterData.length > 0 && (<div style={{height:20, display:'flex',justifyContent:'center',color:'#008FFB', fontSize:'18px', fontWeight:'bold' }}>Humidity</div>)}
-        <div id="chart-humidity" />
-        {filterData.length > 0 && (<div style={{height:20, display:'flex',justifyContent:'center',color:'#00E396', fontSize:'18px', fontWeight:'bold'}}>Soil Moisture</div>)}
-        <div id="chart-moisture" />
-        {filterData.length > 0 && (<div style={{height:20, display:'flex',justifyContent:'center',color:'#FEB019', fontSize:'18px', fontWeight:'bold'}}>Sunlight</div>)}
+        {filterData.length > 0 && (
+          <>
+            <div style={{ textAlign: 'center', color: '#008FFB', fontWeight: 'bold' }}>Humidity</div>
+            <ApexChart
+              options={getChartOptions('Humidity', '#008FFB')}
+              series={[{ name: 'Humidity', data: chartData.humidity }]}
+              type="area"
+              height={300}
+            />
 
-        <div id="chart-sunlight" />
-        {filterData.length > 0 && (<div style={{height:20, display:'flex',justifyContent:'center',color:'#FF4560', fontSize:'18px', fontWeight:'bold'}}>Rain</div>)}
+            <div style={{ textAlign: 'center', color: '#00E396', fontWeight: 'bold' }}>Soil Moisture</div>
+            <ApexChart
+              options={getChartOptions('Soil Moisture', '#00E396')}
+              series={[{ name: 'Soil Moisture', data: chartData.moisture }]}
+              type="area"
+              height={300}
+            />
 
-        <div id="chart-rain" />
+            <div style={{ textAlign: 'center', color: '#FEB019', fontWeight: 'bold' }}>Sunlight</div>
+            <ApexChart
+              options={getChartOptions('Sunlight', '#FEB019')}
+              series={[{ name: 'Sunlight', data: chartData.sunlight }]}
+              type="area"
+              height={300}
+            />
+
+            <div style={{ textAlign: 'center', color: '#FF4560', fontWeight: 'bold' }}>Rain</div>
+            <ApexChart
+              options={getChartOptions('Rain', '#FF4560')}
+              series={[{ name: 'Rain', data: chartData.rain }]}
+              type="area"
+              height={300}
+            />
+          </>
+        )}
       </div>
     </div>
   );

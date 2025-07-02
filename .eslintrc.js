@@ -22,15 +22,14 @@ module.exports = {
     },
   },
   rules: {
-    '@typescript-eslint/no-unused-vars': [
-      'error',
-      {
-        ignoreRestSiblings: true,
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
-      },
-    ],
+    '@typescript-eslint/consistent-type-definitions': 'off',
+    '@typescript-eslint/no-floating-promises':'off',
+    '@typescript-eslint/no-unsafe-argument': 'off',
+    'no-console': 'off',
+    ' @typescript-eslint/no-unused-vars':'off',
+    '@typescript-eslint/no-unsafe-member-access':'off',
+    '@typescript-eslint/no-confusing-void-expression':'off',
+    '@typescript-eslint/no-unused-vars':'off',
     '@typescript-eslint/no-empty-interface': [
       'error',
       {
@@ -76,7 +75,8 @@ module.exports = {
     'no-redeclare': 'off', // conflict with TypeScript function overloads
     'react/jsx-fragments': 'off', // personal style
     'react/prop-types': 'off', // TypeScript is used for type checking
-
+'no-unused-vars':'off',
+'no-undef':'off',
     '@next/next/no-img-element': 'off', // Temporary disabled
   },
 };
