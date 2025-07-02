@@ -56,18 +56,19 @@ export default function NextAppDirEmotionCacheProvider(props: NextAppDirEmotionC
 
     const globals: { name: string; style: string }[] = [];
 
-    inserted.forEach(({ name, isGlobal }) => {
-      const style = registry.cache.inserted[name];
+   inserted.forEach(({ name, isGlobal }) => {
+  const style = registry.cache.inserted[name];
 
-      if (typeof style !== 'boolean') {
-        if (isGlobal) {
-          globals.push({ name, style });
-        } else {
-          styles += style;
-          dataEmotionAttribute += ` ${name}`;
-        }
-      }
-    });
+  if (style && typeof style === 'string') {
+    if (isGlobal) {
+      globals.push({ name, style });
+    } else {
+      styles += style;
+      dataEmotionAttribute += ` ${name}`;
+    }
+  }
+});
+
 
     return (
       <React.Fragment>
