@@ -46,18 +46,18 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
             <Typography color="inherit" sx={{ fontSize: '24px', lineHeight: '32px', textAlign: 'center' }} variant="h1">
               Welcome to{' '}
               <Box component="span" sx={{ color: '#15b79e' }}>
-                Devias Kit
+                IoT Dashboard
               </Box>
             </Typography>
-            <Typography align="center" variant="subtitle1">
-              A professional template that comes with ready-to-use MUI components.
+            <Typography color="inherit" sx={{ fontSize: '16px', lineHeight: '24px', textAlign: 'center' }} variant="body1">
+              A modern dashboard for IoT devices.
             </Typography>
           </Stack>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Box
               component="img"
               alt="Widgets"
-              src="/assets/auth-widgets.png"
+              src="/assets/iot.jpeg"
               sx={{ height: 'auto', width: '100%', maxWidth: '600px' }}
             />
           </Box>

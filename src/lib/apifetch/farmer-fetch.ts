@@ -25,3 +25,16 @@
       console.log(res);
       return res;
     }
+
+    //farmerDataSubmit
+    export const postfarmerdetails = async (data: { crop: string; variety: string }): Promise<void> => {
+      try {
+        const res = await axios.post('http://localhost:3302/', 
+          
+        );
+        
+      } catch (error) {
+        console.error("Error posting variety:", error);
+        throw error;  // Propagate error to handle it later
+      }
+    };

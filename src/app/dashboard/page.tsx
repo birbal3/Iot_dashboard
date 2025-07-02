@@ -16,13 +16,14 @@ import { TotalCustomers } from '@/components/dashboard/overview/total-customers'
 import { TotalProfit } from '@/components/dashboard/overview/total-profit';
 import { Traffic } from '@/components/dashboard/overview/traffic';
 import { CropInitialisation } from '@/components/dashboard/overview/crop-initialisation';
+import Dashboard from '@/components/dashboard/overview/dashboard';
 
 export const metadata = { title: `Overview | Dashboard | ${config.site.name}` } satisfies Metadata;
 
 export default function Page(): React.JSX.Element {
   return (
     <Stack spacing={3}>
-     <CropInitialisation/>
+     <Dashboard/>
     </Stack>
   );
 }

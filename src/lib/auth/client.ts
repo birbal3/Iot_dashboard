@@ -70,30 +70,19 @@ class AuthClient {
     return { error: 'Social authentication not implemented' };
   }
 
-  async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
-    const { email, password } = params;
-    try{
-      const res  = await axios.post('http://localhost:3302/authenticate/login',{
-        email,password
-      })
-      if(res?.data?.success)
-      {
-        const {token,role} = res?.data;
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("role");
-        localStorage.setItem("authToken",token)
-        localStorage.setItem("role", role)
-        return {};
-      }
-      else
-      return {error:"Login failed, check credentials"}
-    }
-    catch(err)
-    {
-      console.log(err);
-      return {error:"Login failed"}
-    }
+async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
+  const { email, password } = params;
+
+  // Hardcoded credentials
+  if (email === "23mca009kishan@eitfaridabad.co.in" && password === "Iot-dashboard") {
+    localStorage.setItem("authToken", "mock-token");
+    localStorage.setItem("role", "admin"); // or any role you'd like
+    return {};
+  } else {
+    return { error: "Invalid email or password" };
   }
+}
+
 
   async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
     return { error: 'Password reset not implemented' };

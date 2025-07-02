@@ -23,7 +23,7 @@ import { authClient } from '@/lib/auth/client';
 import { useUser } from '@/hooks/use-user';
 
 const schema = zod.object({
-  email: zod.string().min(1, { message: 'Email is required' }).email().refine((email)=>email.endsWith('escortskubota.com'), {
+  email: zod.string().min(1, { message: 'Email is required' }).email().refine((email)=>email.endsWith(''), {
     message: `Email must belong to the escortskubota domain`,
   }),
   password: zod.string().min(6, { message: 'Password is required' }),
@@ -53,6 +53,7 @@ export function SignInForm(): React.JSX.Element {
     async (values: Values): Promise<void> => {
       setIsPending(true);
 
+
       const { error } = await authClient.signInWithPassword(values);
 
       if (error) {
@@ -75,12 +76,12 @@ export function SignInForm(): React.JSX.Element {
     <Stack spacing={4}>
       <Stack spacing={1}>
         <Typography variant="h4">Sign in</Typography>
-        <Typography color="text.secondary" variant="body2">
+        {/* <Typography color="text.secondary" variant="body2">
           Don&apos;t have an account?{' '}
           <Link component={RouterLink} href={paths.auth.signUp} underline="hover" variant="subtitle2">
             Sign up
           </Link>
-        </Typography>
+        </Typography> */}
       </Stack>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={2}>
@@ -130,9 +131,9 @@ export function SignInForm(): React.JSX.Element {
             )}
           />
           <div>
-            <Link component={RouterLink} href={paths.auth.resetPassword} variant="subtitle2">
+            {/* <Link component={RouterLink} href={paths.auth.resetPassword} variant="subtitle2">
               Forgot password?
-            </Link>
+            </Link> */}
           </div>
           {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
           <Button disabled={isPending} type="submit" variant="contained">
@@ -140,7 +141,7 @@ export function SignInForm(): React.JSX.Element {
           </Button>
         </Stack>
       </form>
-      <Alert color="warning">Sign in allowed only after admin approval.</Alert>
+      {/* <Alert color="warning">Sign in allowed only after admin approval.</Alert> */}
     </Stack>
   );
 }
