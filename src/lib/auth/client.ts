@@ -3,11 +3,6 @@
 import type { User } from '@/types/user';
 import axios from 'axios';
 
-function generateToken(): string {
-  const arr = new Uint8Array(12);
-  window.crypto.getRandomValues(arr);
-  return Array.from(arr, (v) => v.toString(16).padStart(2, '0')).join('');
-}
 
 const user = {
   id: 'USR-000',
@@ -42,7 +37,6 @@ export interface ResetPasswordParams {
 class AuthClient {
   async signUp(params: SignUpParams): Promise<{ error?: string }> {
     const { firstName, lastName, ein, role, password, email } = params;
-    console.log( firstName, lastName, ein, role, password, email )
 
     try {
       // Make API request
@@ -61,7 +55,6 @@ class AuthClient {
         return { error: 'Sign up failed' };  // Handle sign-up failure
       }
     } catch (err) {
-      console.error('Error during sign-up:', err);  // Log the error for debugging
       return { error: 'An error occurred during sign up. Please try again.' };  // Provide user-friendly error
     }
   }
