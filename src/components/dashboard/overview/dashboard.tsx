@@ -1,21 +1,21 @@
 'use client';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
-import axios from 'axios';
+
 import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { Grid } from '@mui/system';
+import { DatePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import axios from 'axios';
+import dayjs, { Dayjs } from 'dayjs';
 import { Controller, useForm } from 'react-hook-form';
 import { z as zod } from 'zod';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
-import { Grid } from '@mui/system';
-import dynamic from 'next/dynamic';
+
+
+
+
 
 const ApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -32,6 +32,7 @@ interface PayloadData {
   soilMoister: number;
   id: number;
   TimeStamp: string;
+  temperature: number;
 }
 
 const schema = zod.object({
@@ -52,11 +53,13 @@ export default function Dashboard() {
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
   const [filterData, setFilterData] = useState<SensorData[]>([]);
   const [chartData, setChartData] = useState<{
+    temperature: [number, number][];
     humidity: [number, number][];
     moisture: [number, number][];
     sunlight: [number, number][];
     rain: [number, number][];
   }>({
+    temperature: [],
     humidity: [],
     moisture: [],
     sunlight: [],
@@ -80,6 +83,7 @@ export default function Dashboard() {
         'https://g14527fbq1.execute-api.ap-southeast-2.amazonaws.com/data'
       );
       setSensorData(res.data);
+      console.log('Fetched sensor data:', res.data);
     };
     fetchData();
   }, []);
@@ -104,10 +108,11 @@ export default function Dashboard() {
     };
 
     setChartData({
-      humidity: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.humidity]),
-      moisture: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.soilMoister]),
-      sunlight: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.sunlight]),
-      rain: filterData.map(entry => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.rainStatus]),
+      temperature: filterData.map((entry) => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.temperature]),
+      humidity: filterData.map((entry) => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.humidity]),
+      moisture: filterData.map((entry) => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.soilMoister]),
+      sunlight: filterData.map((entry) => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.sunlight]),
+      rain: filterData.map((entry) => [convertToUnixTimestamp(entry.TimeStamp), entry.payload.rainStatus]),
     });
   }, [filterData]);
 
@@ -184,6 +189,14 @@ export default function Dashboard() {
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {filterData.length > 0 && (
           <>
+            <div style={{ textAlign: 'center', color: '#00695c', fontWeight: 'bold' }}>Temperature</div>
+            <ApexChart
+              options={getChartOptions('Temperature', '#00695c')}
+              series={[{ name: 'Temperature', data: chartData.temperature }]}
+              type="area"
+              height={300}
+            />
+
             <div style={{ textAlign: 'center', color: '#008FFB', fontWeight: 'bold' }}>Humidity</div>
             <ApexChart
               options={getChartOptions('Humidity', '#008FFB')}
